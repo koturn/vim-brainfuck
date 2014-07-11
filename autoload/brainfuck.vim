@@ -11,7 +11,8 @@ set cpo&vim
 
 function! brainfuck#exec_current_buffer()
   let l:source = join(getline('1', '$'), '')
-  let l:output = s:execute(l:source)
+  let l:program = s:compile(l:source)
+  let l:output = s:execute(l:program)
   split __BFC_RESULT__
   setl nobuflisted bufhidden=unload buftype=nofile
   call setline(1, split(l:output, "\n"))
@@ -28,47 +29,52 @@ function! brainfuck#translate2C_current_buffer()
 endfunction
 
 
-function! s:execute(source)
-  let l:len  = len(a:source)
+function! s:execute(program)
+  let l:len  = len(a:program)
   let l:memory = repeat([0], 65536)
 
   let l:output = ''
   let l:dc = 0
   let l:pc = 0
   while l:pc < l:len
-    if a:source[l:pc] ==# '>'
-      let l:dc += 1
-    elseif a:source[l:pc] ==# '<'
-      let l:dc -= 1
-    elseif a:source[l:pc] ==# '+'
-      let l:memory[l:dc] += 1
-    elseif a:source[l:pc] ==# '-'
-      let l:memory[l:dc] -= 1
-    elseif a:source[l:pc] ==# '.'
+    if a:program[l:pc] ==# '>'
+      let l:pc += 1
+      let l:dc += a:program[l:pc]
+    elseif a:program[l:pc] ==# '<'
+      let l:pc += 1
+      let l:dc -= a:program[l:pc]
+    elseif a:program[l:pc] ==# '+'
+      let l:pc += 1
+      let l:memory[l:dc] += a:program[l:pc]
+    elseif a:program[l:pc] ==# '-'
+      let l:pc += 1
+      let l:memory[l:dc] -= a:program[l:pc]
+    elseif a:program[l:pc] ==# '.'
       let l:output .= nr2char(l:memory[l:dc])
-    elseif a:source[l:pc] ==# ','
+    elseif a:program[l:pc] ==# ','
       let l:memory[l:dc] = char2nr(getchar())
-    elseif a:source[l:pc] ==# '['
+    elseif a:program[l:pc] ==# '['
       let l:pc += 1
       if l:memory[l:dc] != 0
         continue
       endif
       let l:local_depth = 0
-      while l:local_depth > 0 || a:source[l:pc] != ']'
-        if a:source[l:pc] == '['
+      while l:local_depth > 0 || a:program[l:pc] != ']'
+        if a:program[l:pc] == '['
           let l:local_depth += 1
-        elseif a:source[l:pc] == ']'
+        elseif a:program[l:pc] == ']'
           let l:local_depth -= 1
         endif
         let l:pc += 1
       endwhile
-    elseif a:source[l:pc] ==# ']'
+    elseif a:program[l:pc] ==# ']'
+      let l:loop_pc = l:pc
       let l:pc -= 1
       let l:local_depth = 0
-      while l:local_depth > 0 || a:source[l:pc] != '['
-        if a:source[l:pc] == ']'
+      while l:local_depth > 0 || a:program[l:pc] != '['
+        if a:program[l:pc] == ']'
           let l:local_depth += 1
-        elseif a:source[l:pc] == '['
+        elseif a:program[l:pc] == '['
           let l:local_depth -= 1
         endif
         let l:pc -= 1
@@ -80,6 +86,64 @@ function! s:execute(source)
     let l:pc += 1
   endwhile
   return l:output
+endfunction
+
+
+function! s:compile(source)
+  let l:program = []
+  let l:pc = 0
+  let l:len = strlen(a:source)
+  while l:pc < l:len
+    if a:source[l:pc] ==# '>'
+      let l:cnt = 0
+      while a:source[l:pc] ==# '>'
+        let l:cnt += 1
+        let l:pc += 1
+      endwhile
+      call add(l:program, '>')
+      call add(l:program, l:cnt)
+    elseif a:source[l:pc] ==# '<'
+      let l:cnt = 0
+      while a:source[l:pc] ==# '<'
+        let l:cnt += 1
+        let l:pc += 1
+      endwhile
+      call add(l:program, '<')
+      call add(l:program, l:cnt)
+    elseif a:source[l:pc] ==# '+'
+      let l:cnt = 0
+      while a:source[l:pc] ==# '+'
+        let l:cnt += 1
+        let l:pc += 1
+      endwhile
+      call add(l:program, '+')
+      call add(l:program, l:cnt)
+    elseif a:source[l:pc] ==# '-'
+      let l:cnt = 0
+      while a:source[l:pc] ==# '-'
+        let l:cnt += 1
+        let l:pc += 1
+      endwhile
+      call add(l:program, '-')
+      call add(l:program, l:cnt)
+    elseif a:source[l:pc] ==# '.'
+      call add(l:program, '.')
+      let l:pc += 1
+    elseif a:source[l:pc] ==# ','
+      call add(l:program, ',')
+      let l:pc += 1
+    elseif a:source[l:pc] ==# '['
+      call add(l:program, '[')
+      let l:pc += 1
+    elseif a:source[l:pc] ==# ']'
+      call add(l:program, ']')
+      let l:pc += 1
+    else
+      let l:pc += 1
+    endif
+  endwhile
+
+  return l:program
 endfunction
 
 
