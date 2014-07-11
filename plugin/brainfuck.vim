@@ -13,6 +13,9 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
+let g:brainfuck#use_lua = get(g:, 'brainfuck#use_lua', has('lua'))
+let g:brainfuck#verbose = get(g:, 'brainfuck#verbose', 0)
+
 command! -bar BFExecute  call brainfuck#exec_current_buffer()
 command! -bar BFTranslate2C  call brainfuck#translate2C_current_buffer()
 
