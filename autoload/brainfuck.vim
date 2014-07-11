@@ -92,57 +92,61 @@ if g:brainfuck#use_lua
 
   Brainfuck.compile = function(source)
     local len = string.len(source)
-    local bytecode = {string.byte(source, 1, len)}
     local program = {}
     local jump_table = {}
     local stack = {}
     local stack_idx = 1
     local pc = 1
     while pc <= len do
-      if bytecode[pc] == Brainfuck.NEXT then
-        local cnt = 0
-        while bytecode[pc] == Brainfuck.NEXT do
+      local cmd = string.byte(source, pc)
+      if cmd == Brainfuck.NEXT then
+        pc = pc + 1
+        local cnt = 1
+        while string.byte(source, pc) == Brainfuck.NEXT do
           cnt = cnt + 1
           pc = pc + 1
         end
         table.insert(program, Brainfuck.NEXT)
         table.insert(program, cnt)
-      elseif bytecode[pc] == Brainfuck.PREV then
-        local cnt = 0
-        while bytecode[pc] == Brainfuck.PREV do
+      elseif cmd == Brainfuck.PREV then
+        pc = pc + 1
+        local cnt = 1
+        while string.byte(source, pc) == Brainfuck.PREV do
           cnt = cnt + 1
           pc = pc + 1
         end
         table.insert(program, Brainfuck.PREV)
         table.insert(program, cnt)
-      elseif bytecode[pc] == Brainfuck.INC then
-        local cnt = 0
-        while bytecode[pc] == Brainfuck.INC do
+      elseif cmd == Brainfuck.INC then
+        pc = pc + 1
+        local cnt = 1
+        while string.byte(source, pc) == Brainfuck.INC do
           cnt = cnt + 1
           pc = pc + 1
         end
         table.insert(program, Brainfuck.INC)
         table.insert(program, cnt)
-      elseif bytecode[pc] == Brainfuck.DEC then
-        local cnt = 0
-        while bytecode[pc] == Brainfuck.DEC do
+      elseif cmd == Brainfuck.DEC then
+        pc = pc + 1
+        local cnt = 1
+        while string.byte(source, pc) == Brainfuck.DEC do
           cnt = cnt + 1
           pc = pc + 1
         end
         table.insert(program, Brainfuck.DEC)
         table.insert(program, cnt)
-      elseif bytecode[pc] == Brainfuck.OUTPUT then
+      elseif cmd == Brainfuck.OUTPUT then
         table.insert(program, Brainfuck.OUTPUT)
         pc = pc + 1
-      elseif bytecode[pc] == Brainfuck.INPUT then
+      elseif cmd == Brainfuck.INPUT then
         table.insert(program, Brainfuck.INPUT)
         pc = pc + 1
-      elseif bytecode[pc] == Brainfuck.LOOP_S then
+      elseif cmd == Brainfuck.LOOP_S then
         stack[stack_idx] = #program + 1
         stack_idx = stack_idx + 1
         table.insert(program, Brainfuck.LOOP_S)
         pc = pc + 1
-      elseif bytecode[pc] == Brainfuck.LOOP_E then
+      elseif cmd == Brainfuck.LOOP_E then
         stack_idx = stack_idx - 1
         jump_table[stack[stack_idx]] = #program + 1
         jump_table[#program + 1] = stack[stack_idx]
