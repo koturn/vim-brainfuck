@@ -10,8 +10,8 @@ set cpo&vim
 
 
 function! brainfuck#exec_current_buffer()
-  let l:source = join(getline("1", "$"), "")
-  let l:output = brainfuck#execute(l:source)
+  let l:source = join(getline('1', '$'), '')
+  let l:output = s:execute(l:source)
   split __BFC_RESULT__
   setl nobuflisted bufhidden=unload buftype=nofile
   call setline(1, split(l:output, "\n"))
@@ -19,8 +19,8 @@ endfunction
 
 
 function! brainfuck#translate2C_current_buffer()
-  let l:source = join(getline("1", "$"), "")
-  let l:output = brainfuck#translate2C(l:source, '  ')
+  let l:source = join(getline('1', '$'), '')
+  let l:output = s:translate2C(l:source, '  ')
   split __BFC_NEWFILE__
   setl nobuflisted bufhidden=unload buftype=nofile
   setfiletype c
@@ -28,7 +28,7 @@ function! brainfuck#translate2C_current_buffer()
 endfunction
 
 
-function! brainfuck#execute(source)
+function! s:execute(source)
   let l:len  = len(a:source)
   let l:memory = repeat([0], 65536)
 
@@ -75,7 +75,7 @@ function! brainfuck#execute(source)
       endwhile
       let l:pc -= 1
     else
-      echoerr 'Invalid character'
+      throw 'Invalid character'
     endif
     let l:pc += 1
   endwhile
@@ -83,7 +83,7 @@ function! brainfuck#execute(source)
 endfunction
 
 
-function! brainfuck#translate2C(source, istr)
+function! s:translate2C(source, istr)
   let l:output = "#include <stdio.h>\n"
         \ . "#include <stdlib.h>\n\n"
         \ . "#define MEMORY_SIZE 65536\n\n"
