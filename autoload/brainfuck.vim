@@ -11,8 +11,8 @@ set cpo&vim
 
 function! brainfuck#exec_current_buffer()
   let l:source = join(getline('1', '$'), '')
-  let l:program = s:compile(l:source)
-  let l:output = s:execute(l:program)
+  let l:compiled_source = s:compile(l:source)
+  let l:output = s:execute(l:compiled_source)
   split __BFC_RESULT__
   setl nobuflisted bufhidden=unload buftype=nofile
   call setline(1, split(l:output, "\n"))
@@ -29,59 +29,37 @@ function! brainfuck#translate2C_current_buffer()
 endfunction
 
 
-function! s:execute(program)
-  let l:len  = len(a:program)
+function! s:execute(compiled_source)
+  let [l:program, l:jump_table] = a:compiled_source
+  let l:len = len(l:program)
   let l:memory = repeat([0], 65536)
 
   let l:output = ''
   let l:dc = 0
   let l:pc = 0
   while l:pc < l:len
-    if a:program[l:pc] ==# '>'
+    if l:program[l:pc] ==# '>'
       let l:pc += 1
-      let l:dc += a:program[l:pc]
-    elseif a:program[l:pc] ==# '<'
+      let l:dc += l:program[l:pc]
+    elseif l:program[l:pc] ==# '<'
       let l:pc += 1
-      let l:dc -= a:program[l:pc]
-    elseif a:program[l:pc] ==# '+'
+      let l:dc -= l:program[l:pc]
+    elseif l:program[l:pc] ==# '+'
       let l:pc += 1
-      let l:memory[l:dc] += a:program[l:pc]
-    elseif a:program[l:pc] ==# '-'
+      let l:memory[l:dc] += l:program[l:pc]
+    elseif l:program[l:pc] ==# '-'
       let l:pc += 1
-      let l:memory[l:dc] -= a:program[l:pc]
-    elseif a:program[l:pc] ==# '.'
+      let l:memory[l:dc] -= l:program[l:pc]
+    elseif l:program[l:pc] ==# '.'
       let l:output .= nr2char(l:memory[l:dc])
-    elseif a:program[l:pc] ==# ','
+    elseif l:program[l:pc] ==# ','
       let l:memory[l:dc] = char2nr(getchar())
-    elseif a:program[l:pc] ==# '['
-      let l:pc += 1
-      if l:memory[l:dc] != 0
-        continue
+    elseif l:program[l:pc] ==# '['
+      if l:memory[l:dc] == 0
+        let l:pc = l:jump_table[l:pc]
       endif
-      let l:local_depth = 0
-      while l:local_depth > 0 || a:program[l:pc] != ']'
-        if a:program[l:pc] == '['
-          let l:local_depth += 1
-        elseif a:program[l:pc] == ']'
-          let l:local_depth -= 1
-        endif
-        let l:pc += 1
-      endwhile
-    elseif a:program[l:pc] ==# ']'
-      let l:loop_pc = l:pc
-      let l:pc -= 1
-      let l:local_depth = 0
-      while l:local_depth > 0 || a:program[l:pc] != '['
-        if a:program[l:pc] == ']'
-          let l:local_depth += 1
-        elseif a:program[l:pc] == '['
-          let l:local_depth -= 1
-        endif
-        let l:pc -= 1
-      endwhile
-      let l:pc -= 1
-    else
-      throw 'Invalid character'
+    elseif l:program[l:pc] ==# ']'
+      let l:pc = l:jump_table[l:pc] - 1
     endif
     let l:pc += 1
   endwhile
@@ -91,6 +69,10 @@ endfunction
 
 function! s:compile(source)
   let l:program = []
+  let l:jump_table = {}
+  let l:stack = repeat([0], 256)
+  let l:stack_idx = 0
+
   let l:pc = 0
   let l:len = strlen(a:source)
   while l:pc < l:len
@@ -133,9 +115,14 @@ function! s:compile(source)
       call add(l:program, ',')
       let l:pc += 1
     elseif a:source[l:pc] ==# '['
+      let l:stack[l:stack_idx] = len(l:program)
+      let l:stack_idx += 1
       call add(l:program, '[')
       let l:pc += 1
     elseif a:source[l:pc] ==# ']'
+      let l:stack_idx -= 1
+      let jump_table[l:stack[l:stack_idx]] = len(l:program)
+      let jump_table[len(l:program)] = l:stack[l:stack_idx]
       call add(l:program, ']')
       let l:pc += 1
     else
@@ -143,7 +130,7 @@ function! s:compile(source)
     endif
   endwhile
 
-  return l:program
+  return [l:program, l:jump_table]
 endfunction
 
 
