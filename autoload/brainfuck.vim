@@ -163,6 +163,15 @@ EOF
     return luaeval('Brainfuck.execute(Brainfuck.compile(vim.eval("a:source")))')
   endfunction
 else
+  let s:NEXT   = 0x00 | lockvar s:NEXT
+  let s:PREV   = 0x01 | lockvar s:PREV
+  let s:INC    = 0x02 | lockvar s:INC
+  let s:DEC    = 0x03 | lockvar s:DEC
+  let s:OUTPUT = 0x04 | lockvar s:OUTPUT
+  let s:INPUT  = 0x05 | lockvar s:INPUT
+  let s:LOOP_S = 0x06 | lockvar s:LOOP_S
+  let s:LOOP_E = 0x07 | lockvar s:LOOP_E
+
   function! s:execute(compiled_source)
     let [l:program, l:jump_table] = a:compiled_source
     let l:len = len(l:program)
@@ -171,27 +180,27 @@ else
     let l:dc = 0
     let l:pc = 0
     while l:pc < l:len
-      if l:program[l:pc] ==# '>'
+      if l:program[l:pc] == s:NEXT
         let l:pc += 1
         let l:dc += l:program[l:pc]
-      elseif l:program[l:pc] ==# '<'
+      elseif l:program[l:pc] == s:PREV
         let l:pc += 1
         let l:dc -= l:program[l:pc]
-      elseif l:program[l:pc] ==# '+'
+      elseif l:program[l:pc] == s:INC
         let l:pc += 1
         let l:memory[l:dc] += l:program[l:pc]
-      elseif l:program[l:pc] ==# '-'
+      elseif l:program[l:pc] == s:DEC
         let l:pc += 1
         let l:memory[l:dc] -= l:program[l:pc]
-      elseif l:program[l:pc] ==# '.'
+      elseif l:program[l:pc] == s:OUTPUT
         let l:output .= nr2char(l:memory[l:dc])
-      elseif l:program[l:pc] ==# ','
+      elseif l:program[l:pc] == s:INPUT
         let l:memory[l:dc] = char2nr(getchar())
-      elseif l:program[l:pc] ==# '['
+      elseif l:program[l:pc] == s:LOOP_S
         if l:memory[l:dc] == 0
           let l:pc = l:jump_table[l:pc]
         endif
-      elseif l:program[l:pc] ==# ']'
+      elseif l:program[l:pc] == s:LOOP_E
         let l:pc = l:jump_table[l:pc] - 1
       endif
       let l:pc += 1
@@ -214,7 +223,7 @@ else
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, '>')
+        call add(l:program, s:NEXT)
         call add(l:program, l:cnt)
       elseif a:source[l:pc] ==# '<'
         let l:cnt = 0
@@ -222,7 +231,7 @@ else
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, '<')
+        call add(l:program, s:PREV)
         call add(l:program, l:cnt)
       elseif a:source[l:pc] ==# '+'
         let l:cnt = 0
@@ -230,7 +239,7 @@ else
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, '+')
+        call add(l:program, s:INC)
         call add(l:program, l:cnt)
       elseif a:source[l:pc] ==# '-'
         let l:cnt = 0
@@ -238,24 +247,24 @@ else
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, '-')
+        call add(l:program, s:DEC)
         call add(l:program, l:cnt)
       elseif a:source[l:pc] ==# '.'
-        call add(l:program, '.')
+        call add(l:program, s:OUTPUT)
         let l:pc += 1
       elseif a:source[l:pc] ==# ','
-        call add(l:program, ',')
+        call add(l:program, s:INPUT)
         let l:pc += 1
       elseif a:source[l:pc] ==# '['
         let l:stack[l:stack_idx] = len(l:program)
         let l:stack_idx += 1
-        call add(l:program, '[')
+        call add(l:program, s:LOOP_S)
         let l:pc += 1
       elseif a:source[l:pc] ==# ']'
         let l:stack_idx -= 1
         let jump_table[l:stack[l:stack_idx]] = len(l:program)
         let jump_table[len(l:program)] = l:stack[l:stack_idx]
-        call add(l:program, ']')
+        call add(l:program, s:LOOP_E)
         let l:pc += 1
       else
         let l:pc += 1
