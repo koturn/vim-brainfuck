@@ -13,8 +13,8 @@ elseif exists("b:current_syntax")
   finish
 endif
 
-syn match bfOpPointer '[<>]'
 syn match bfOpValue   '[+-]'
+syn match bfOpPointer '[<>]'
 syn match bfIO        '[.,]'
 syn match bfLoop      '[[\]]'
 syn match bfError     '[^<>+\-.,[\]]\+'
