@@ -39,8 +39,8 @@ if g:brainfuck#use_lua
   Brainfuck = {
     NEXT   = string.byte('>'),
     PREV   = string.byte('<'),
-    INC    = string.byte('+'),
-    DEC    = string.byte('-'),
+    ADD    = string.byte('+'),
+    SUB    = string.byte('-'),
     OUTPUT = string.byte('.'),
     INPUT  = string.byte(','),
     LOOP_S = string.byte('['),
@@ -61,18 +61,9 @@ if g:brainfuck#use_lua
         if memory[dc] == nil then
           memory[dc] = 0
         end
-      elseif program[pc] == Brainfuck.PREV then
-        pc = pc + 1
-        dc = dc - program[pc]
-        if memory[dc] == nil then
-          memory[dc] = 0
-        end
-      elseif program[pc] == Brainfuck.INC then
+      elseif program[pc] == Brainfuck.ADD then
         pc = pc + 1
         memory[dc] = memory[dc] + program[pc]
-      elseif program[pc] == Brainfuck.DEC then
-        pc = pc + 1
-        memory[dc] = memory[dc] - program[pc]
       elseif program[pc] == Brainfuck.OUTPUT then
         output = output .. string.char(memory[dc])
       elseif program[pc] == Brainfuck.INPUT then
@@ -115,26 +106,26 @@ if g:brainfuck#use_lua
           cnt = cnt + 1
           pc = pc + 1
         end
-        table.insert(program, Brainfuck.PREV)
-        table.insert(program, cnt)
-      elseif cmd == Brainfuck.INC then
+        table.insert(program, Brainfuck.NEXT)
+        table.insert(program, -cnt)
+      elseif cmd == Brainfuck.ADD then
         pc = pc + 1
         local cnt = 1
-        while string.byte(source, pc) == Brainfuck.INC do
+        while string.byte(source, pc) == Brainfuck.ADD do
           cnt = cnt + 1
           pc = pc + 1
         end
-        table.insert(program, Brainfuck.INC)
+        table.insert(program, Brainfuck.ADD)
         table.insert(program, cnt)
-      elseif cmd == Brainfuck.DEC then
+      elseif cmd == Brainfuck.SUB then
         pc = pc + 1
         local cnt = 1
-        while string.byte(source, pc) == Brainfuck.DEC do
+        while string.byte(source, pc) == Brainfuck.SUB do
           cnt = cnt + 1
           pc = pc + 1
         end
-        table.insert(program, Brainfuck.DEC)
-        table.insert(program, cnt)
+        table.insert(program, Brainfuck.ADD)
+        table.insert(program, -cnt)
       elseif cmd == Brainfuck.OUTPUT then
         table.insert(program, Brainfuck.OUTPUT)
         pc = pc + 1
@@ -164,13 +155,11 @@ EOF
   endfunction
 else
   let s:NEXT   = 0x00 | lockvar s:NEXT
-  let s:PREV   = 0x01 | lockvar s:PREV
-  let s:INC    = 0x02 | lockvar s:INC
-  let s:DEC    = 0x03 | lockvar s:DEC
-  let s:OUTPUT = 0x04 | lockvar s:OUTPUT
-  let s:INPUT  = 0x05 | lockvar s:INPUT
-  let s:LOOP_S = 0x06 | lockvar s:LOOP_S
-  let s:LOOP_E = 0x07 | lockvar s:LOOP_E
+  let s:ADD    = 0x01 | lockvar s:ADD
+  let s:OUTPUT = 0x02 | lockvar s:OUTPUT
+  let s:INPUT  = 0x03 | lockvar s:INPUT
+  let s:LOOP_S = 0x04 | lockvar s:LOOP_S
+  let s:LOOP_E = 0x05 | lockvar s:LOOP_E
 
   function! s:execute(compiled_source)
     let [l:program, l:jump_table] = a:compiled_source
@@ -183,15 +172,9 @@ else
       if l:program[l:pc] == s:NEXT
         let l:pc += 1
         let l:dc += l:program[l:pc]
-      elseif l:program[l:pc] == s:PREV
-        let l:pc += 1
-        let l:dc -= l:program[l:pc]
-      elseif l:program[l:pc] == s:INC
+      elseif l:program[l:pc] == s:ADD
         let l:pc += 1
         let l:memory[l:dc] += l:program[l:pc]
-      elseif l:program[l:pc] == s:DEC
-        let l:pc += 1
-        let l:memory[l:dc] -= l:program[l:pc]
       elseif l:program[l:pc] == s:OUTPUT
         let l:output .= nr2char(l:memory[l:dc])
       elseif l:program[l:pc] == s:INPUT
@@ -231,15 +214,15 @@ else
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, s:PREV)
-        call add(l:program, l:cnt)
+        call add(l:program, s:NEXT)
+        call add(l:program, -l:cnt)
       elseif a:source[l:pc] ==# '+'
         let l:cnt = 0
         while a:source[l:pc] ==# '+'
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, s:INC)
+        call add(l:program, s:ADD)
         call add(l:program, l:cnt)
       elseif a:source[l:pc] ==# '-'
         let l:cnt = 0
@@ -247,8 +230,8 @@ else
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, s:DEC)
-        call add(l:program, l:cnt)
+        call add(l:program, s:ADD)
+        call add(l:program, -l:cnt)
       elseif a:source[l:pc] ==# '.'
         call add(l:program, s:OUTPUT)
         let l:pc += 1
