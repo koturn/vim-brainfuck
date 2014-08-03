@@ -55,24 +55,25 @@ if g:brainfuck#use_lua
     local dc = 1
     local pc = 1
     while pc <= len do
-      if program[pc] == Brainfuck.NEXT then
+      local c = program[pc]
+      if c == Brainfuck.NEXT then
         pc = pc + 1
         dc = dc + program[pc]
         if memory[dc] == nil then
           memory[dc] = 0
         end
-      elseif program[pc] == Brainfuck.ADD then
+      elseif c == Brainfuck.ADD then
         pc = pc + 1
         memory[dc] = memory[dc] + program[pc]
-      elseif program[pc] == Brainfuck.OUTPUT then
+      elseif c == Brainfuck.OUTPUT then
         output = output .. string.char(memory[dc])
-      elseif program[pc] == Brainfuck.INPUT then
+      elseif c == Brainfuck.INPUT then
         memory[dc] = vim.eval('getchar()')
-      elseif program[pc] == Brainfuck.LOOP_S then
+      elseif c == Brainfuck.LOOP_S then
         if memory[dc] == 0 then
           pc = jump_table[pc]
         end
-      elseif program[pc] == Brainfuck.LOOP_E then
+      elseif c == Brainfuck.LOOP_E then
         pc = jump_table[pc] - 1
       end
       pc = pc + 1
@@ -89,8 +90,8 @@ if g:brainfuck#use_lua
     local stack_idx = 1
     local pc = 1
     while pc <= len do
-      local cmd = string.byte(source, pc)
-      if cmd == Brainfuck.NEXT then
+      local c = string.byte(source, pc)
+      if c == Brainfuck.NEXT then
         pc = pc + 1
         local cnt = 1
         while string.byte(source, pc) == Brainfuck.NEXT do
@@ -99,7 +100,7 @@ if g:brainfuck#use_lua
         end
         table.insert(program, Brainfuck.NEXT)
         table.insert(program, cnt)
-      elseif cmd == Brainfuck.PREV then
+      elseif c == Brainfuck.PREV then
         pc = pc + 1
         local cnt = 1
         while string.byte(source, pc) == Brainfuck.PREV do
@@ -108,7 +109,7 @@ if g:brainfuck#use_lua
         end
         table.insert(program, Brainfuck.NEXT)
         table.insert(program, -cnt)
-      elseif cmd == Brainfuck.ADD then
+      elseif c == Brainfuck.ADD then
         pc = pc + 1
         local cnt = 1
         while string.byte(source, pc) == Brainfuck.ADD do
@@ -117,7 +118,7 @@ if g:brainfuck#use_lua
         end
         table.insert(program, Brainfuck.ADD)
         table.insert(program, cnt)
-      elseif cmd == Brainfuck.SUB then
+      elseif c == Brainfuck.SUB then
         pc = pc + 1
         local cnt = 1
         while string.byte(source, pc) == Brainfuck.SUB do
@@ -126,18 +127,18 @@ if g:brainfuck#use_lua
         end
         table.insert(program, Brainfuck.ADD)
         table.insert(program, -cnt)
-      elseif cmd == Brainfuck.OUTPUT then
+      elseif c == Brainfuck.OUTPUT then
         table.insert(program, Brainfuck.OUTPUT)
         pc = pc + 1
-      elseif cmd == Brainfuck.INPUT then
+      elseif c == Brainfuck.INPUT then
         table.insert(program, Brainfuck.INPUT)
         pc = pc + 1
-      elseif cmd == Brainfuck.LOOP_S then
+      elseif c == Brainfuck.LOOP_S then
         stack[stack_idx] = #program + 1
         stack_idx = stack_idx + 1
         table.insert(program, Brainfuck.LOOP_S)
         pc = pc + 1
-      elseif cmd == Brainfuck.LOOP_E then
+      elseif c == Brainfuck.LOOP_E then
         stack_idx = stack_idx - 1
         jump_table[stack[stack_idx]] = #program + 1
         jump_table[#program + 1] = stack[stack_idx]
@@ -169,21 +170,22 @@ else
     let l:dc = 0
     let l:pc = 0
     while l:pc < l:len
-      if l:program[l:pc] == s:NEXT
+      let l:c = l:program[l:pc]
+      if l:c == s:NEXT
         let l:pc += 1
         let l:dc += l:program[l:pc]
-      elseif l:program[l:pc] == s:ADD
+      elseif l:c == s:ADD
         let l:pc += 1
         let l:memory[l:dc] += l:program[l:pc]
-      elseif l:program[l:pc] == s:OUTPUT
+      elseif l:c == s:OUTPUT
         let l:output .= nr2char(l:memory[l:dc])
-      elseif l:program[l:pc] == s:INPUT
+      elseif l:c == s:INPUT
         let l:memory[l:dc] = char2nr(getchar())
-      elseif l:program[l:pc] == s:LOOP_S
+      elseif l:c == s:LOOP_S
         if l:memory[l:dc] == 0
           let l:pc = l:jump_table[l:pc]
         endif
-      elseif l:program[l:pc] == s:LOOP_E
+      elseif l:c == s:LOOP_E
         let l:pc = l:jump_table[l:pc] - 1
       endif
       let l:pc += 1
