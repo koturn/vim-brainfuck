@@ -47,7 +47,6 @@ if g:brainfuck#use_lua
     LOOP_E = string.byte(']')
   }
 
-
   Brainfuck.execute = function(program, jump_table)
     local len = #program
     local memory = {0}
@@ -161,6 +160,8 @@ else
   let s:INPUT  = 0x03 | lockvar s:INPUT
   let s:LOOP_S = 0x04 | lockvar s:LOOP_S
   let s:LOOP_E = 0x05 | lockvar s:LOOP_E
+  let s:INST_DICT = {'>': s:NEXT, '<': s:NEXT, '+': s:ADD, '-': s:ADD}
+  lockvar s:INST_DICT
 
   function! s:execute(compiled_source)
     let [l:program, l:jump_table] = a:compiled_source
@@ -202,50 +203,27 @@ else
     let l:pc = 0
     let l:len = strlen(a:source)
     while l:pc < l:len
-      if a:source[l:pc] ==# '>'
+      let l:c = a:source[l:pc]
+      if l:c =~# '[><+-]'
         let l:cnt = 0
-        while a:source[l:pc] ==# '>'
+        while a:source[l:pc] ==# l:c
           let l:cnt += 1
           let l:pc += 1
         endwhile
-        call add(l:program, s:NEXT)
-        call add(l:program, l:cnt)
-      elseif a:source[l:pc] ==# '<'
-        let l:cnt = 0
-        while a:source[l:pc] ==# '<'
-          let l:cnt += 1
-          let l:pc += 1
-        endwhile
-        call add(l:program, s:NEXT)
-        call add(l:program, -l:cnt)
-      elseif a:source[l:pc] ==# '+'
-        let l:cnt = 0
-        while a:source[l:pc] ==# '+'
-          let l:cnt += 1
-          let l:pc += 1
-        endwhile
-        call add(l:program, s:ADD)
-        call add(l:program, l:cnt)
-      elseif a:source[l:pc] ==# '-'
-        let l:cnt = 0
-        while a:source[l:pc] ==# '-'
-          let l:cnt += 1
-          let l:pc += 1
-        endwhile
-        call add(l:program, s:ADD)
-        call add(l:program, -l:cnt)
-      elseif a:source[l:pc] ==# '.'
+        call add(l:program, s:INST_DICT[l:c])
+        call add(l:program, l:c =~# '[>+]' ? l:cnt : -l:cnt)
+      elseif l:c ==# '.'
         call add(l:program, s:OUTPUT)
         let l:pc += 1
-      elseif a:source[l:pc] ==# ','
+      elseif l:c ==# ','
         call add(l:program, s:INPUT)
         let l:pc += 1
-      elseif a:source[l:pc] ==# '['
+      elseif l:c ==# '['
         let l:stack[l:stack_idx] = len(l:program)
         let l:stack_idx += 1
         call add(l:program, s:LOOP_S)
         let l:pc += 1
-      elseif a:source[l:pc] ==# ']'
+      elseif l:c ==# ']'
         let l:stack_idx -= 1
         let jump_table[l:stack[l:stack_idx]] = len(l:program)
         let jump_table[len(l:program)] = l:stack[l:stack_idx]
