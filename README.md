@@ -1,6 +1,8 @@
 vim-brainfuck
 =============
 
+[![Build Status](https://travis-ci.org/koturn/vim-brainfuck.png)](https://travis-ci.org/koturn/vim-brainfuck)
+
 
 ## Summary
 
