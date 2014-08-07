@@ -9,6 +9,10 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
+let g:brainfuck#use_lua = get(g:, 'brainfuck#use_lua', has('lua'))
+let g:brainfuck#verbose = get(g:, 'brainfuck#verbose', 0)
+
+
 function! brainfuck#exec_current_buffer()
   let l:source = join(getline('1', '$'), '')
   if g:brainfuck#verbose
@@ -18,7 +22,7 @@ function! brainfuck#exec_current_buffer()
   if g:brainfuck#verbose
     echomsg '[brainfuck] execute time:' reltimestr(reltime(l:start_time))
   endif
-  split __BFC_RESULT__
+  split __BF_RESULT__
   setl nobuflisted bufhidden=unload buftype=nofile
   call setline(1, split(l:output, "\n"))
 endfunction
