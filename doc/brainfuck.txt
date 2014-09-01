@@ -1,0 +1,90 @@
+*brainfuck.txt*	A brainfuck interpreter and C-translator for Vim
+
+Author  : koturn <jeak.koutan.apple@gmail.com>
+License : MIT license  {{{
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}}}
+
+==============================================================================
+CONTENTS					*brainfuck-contents*
+
+INTRODUCTION			|brainfuck-introduction|
+USAGE				|brainfuck-usage|
+INTERFACE			|brainfuck-interface|
+  VARIABLES			  |brainfuck-variables|
+  COMMANDS			  |brainfuck-commands|
+  FUNCTIONS			  |brainfuck-functions|
+TODO				|brainfuck-todo|
+
+
+==============================================================================
+INTRODUCTION					*brainfuck-introduction*
+
+*brainfuck* is a Vim plugin 
+
+Latest version:
+https://github.com/user/brainfuck.vim
+
+
+==============================================================================
+USAGE						*brainfuck-usage*
+
+Open brainfuck source code and execute :BFExecute in the buffer. Then your Vim
+execute the brainfuck source code. If your Vim is compiled with 'lua', use
+lua-jit to execute brainfuck program.
+
+
+==============================================================================
+INTERFACE					*brainfuck-interface*
+
+------------------------------------------------------------------------------
+VARIABLES					*brainfuck-variables*
+
+g:brainfuck#use_lua				*g:brainfuck#use_lua*
+	default value: has("lua")
+	Use lua or not. If you don't want to use lua, set 0 this variable.
+
+g:brainfuck#verbose				*g:brainfuck#verbose*
+	default value: 0
+	Show execute time or not. If you want to show execute time, set 1
+	this variable.
+
+
+------------------------------------------------------------------------------
+COMMANDS					*brainfuck-commands*
+
+:BFExecute					*:BFExecute*
+	Execute brainfuck program in the current buffer.
+
+:BFTranslate2C					*:BFTranslate2C*
+	Translate brainfuck program  in the current buffer to C source code.
+
+
+------------------------------------------------------------------------------
+FUNCTIONS					*brainfuck-functions*
+
+brainfuck#exec_current_buffer()		*brainfuck#exec_current_buffer()*
+	Execute brainfuck program in the current buffer.
+
+brainfuck#translate2C_current_buffer()	*brainfuck#translate2C_current_buffer()*
+	Translate brainfuck program  in the current buffer to C source code.
+
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:noet:fen:
