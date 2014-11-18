@@ -48,7 +48,8 @@ if g:brainfuck#use_lua
     OUTPUT = string.byte('.'),
     INPUT  = string.byte(','),
     LOOP_S = string.byte('['),
-    LOOP_E = string.byte(']')
+    LOOP_E = string.byte(']'),
+    ASSIGN_ZERO = string.byte('0')
   }
 
   Brainfuck.execute = function(program, jump_table)
@@ -78,6 +79,8 @@ if g:brainfuck#use_lua
         end
       elseif c == Brainfuck.LOOP_E then
         pc = jump_table[pc] - 1
+      elseif c == Brainfuck.ASSIGN_ZERO then
+        memory[dc] = 0
       end
       pc = pc + 1
     end
@@ -137,10 +140,17 @@ if g:brainfuck#use_lua
         table.insert(program, Brainfuck.INPUT)
         pc = pc + 1
       elseif c == Brainfuck.LOOP_S then
-        stack[stack_idx] = #program + 1
-        stack_idx = stack_idx + 1
-        table.insert(program, Brainfuck.LOOP_S)
-        pc = pc + 1
+        if pc <= len - 2 and
+          string.byte(source, pc + 1) == Brainfuck.SUB and
+          string.byte(source, pc + 2) == Brainfuck.LOOP_E then
+          table.insert(program, Brainfuck.ASSIGN_ZERO)
+          pc = pc + 3
+        else
+          stack[stack_idx] = #program + 1
+          stack_idx = stack_idx + 1
+          table.insert(program, Brainfuck.LOOP_S)
+          pc = pc + 1
+        end
       elseif c == Brainfuck.LOOP_E then
         stack_idx = stack_idx - 1
         jump_table[stack[stack_idx]] = #program + 1
@@ -164,6 +174,7 @@ else
   let s:INPUT  = 0x03 | lockvar s:INPUT
   let s:LOOP_S = 0x04 | lockvar s:LOOP_S
   let s:LOOP_E = 0x05 | lockvar s:LOOP_E
+  let s:ASSIGN_ZERO = 0x06 | lockvar s:ASSIGN_ZERO
   let s:INST_DICT = {'>': s:NEXT, '<': s:NEXT, '+': s:ADD, '-': s:ADD}
   lockvar s:INST_DICT
 
@@ -192,6 +203,8 @@ else
         endif
       elseif l:c == s:LOOP_E
         let l:pc = l:jump_table[l:pc] - 1
+      elseif l:c == s:ASSIGN_ZERO
+        let l:memory[l:dc] = 0
       endif
       let l:pc += 1
     endwhile
@@ -223,10 +236,15 @@ else
         call add(l:program, s:INPUT)
         let l:pc += 1
       elseif l:c ==# '['
-        let l:stack[l:stack_idx] = len(l:program)
-        let l:stack_idx += 1
-        call add(l:program, s:LOOP_S)
-        let l:pc += 1
+        if l:pc < len - 2 && a:source[l:pc + 1] == '-' && a:source[l:pc + 2] == ']'
+          call add(l:program, s:ASSIGN_ZERO)
+          let l:pc += 3
+        else
+          let l:stack[l:stack_idx] = len(l:program)
+          let l:stack_idx += 1
+          call add(l:program, s:LOOP_S)
+          let l:pc += 1
+        endif
       elseif l:c ==# ']'
         let l:stack_idx -= 1
         let jump_table[l:stack[l:stack_idx]] = len(l:program)
@@ -298,9 +316,14 @@ function! s:translate2C(source, istr)
       let l:output .= repeat(a:istr, l:depth) . "*ptr = getchar();\n"
       let l:pc += 1
     elseif a:source[l:pc] ==# '['
-      let l:output .= repeat(a:istr, l:depth) . "while (*ptr) {\n"
-      let l:depth += 1
-      let l:pc += 1
+      if a:source[l:pc + 1] == '-' && a:source[l:pc + 2] == ']'
+        let l:output .= repeat(a:istr, l:depth) . "*ptr = 0;\n"
+        let l:pc += 3
+      else
+        let l:output .= repeat(a:istr, l:depth) . "while (*ptr) {\n"
+        let l:depth += 1
+        let l:pc += 1
+      endif
     elseif a:source[l:pc] ==# ']'
       let l:depth -= 1
       let l:output .= repeat(a:istr, l:depth) . "}\n"
